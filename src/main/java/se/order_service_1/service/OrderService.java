@@ -1,6 +1,6 @@
 package se.order_service_1.service;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,6 @@ import se.order_service_1.model.Order;
 import se.order_service_1.repository.OrderItemRepository;
 import se.order_service_1.repository.OrderRepository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,13 +139,13 @@ public class OrderService {
      * @param paymentRequest betalningsuppgifter
      * @return transaktions-ID för betalningen
      */
-    public String finalizeOrder(Long orderId, PaymentRequest paymentRequest) {
+    public String finalizeOrder(Long orderId, PaymentRequest paymentRequest, Jwt jwt) {
         log.info("finalizeOrder - försök slutföra order med id={}", orderId);
 
         Order order = getOrderById(orderId);
         checkNotCompleted(order);
 
-        updateProductQuantities(orderId);
+        updateProductQuantities(orderId, jwt);
 
         // Beräkna ordersumma
         Double totalBelopp = calculateOrderTotal(orderId);
@@ -173,7 +172,7 @@ public class OrderService {
 
     //Testa att uppdatera Product_Services inventory
     //If failed throws exception
-    private void updateProductQuantities(Long orderId) {
+    private void updateProductQuantities(Long orderId, Jwt jwt) {
         List<PlaceOrderRequest.ProductChange> productChangeList = new ArrayList<>();
         PlaceOrderRequest.ProductChange productChange;
         for(OrderItem orderItem : orderItemRepository.findByOrderId(orderId)){

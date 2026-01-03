@@ -84,10 +84,15 @@ public class OrderController {
     @PutMapping("/finalizeOrder/{orderId}")
     public ResponseEntity<Map<String, String>> finalizeOrder(
             @PathVariable Long orderId,
-            @RequestBody FinalizeOrderRequest request) {
+            @RequestBody FinalizeOrderRequest request,
+            Authentication authentication) {
+
+        // Cast Authentication to JwtAuthenticationToken
+        JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+        Jwt jwt = jwtAuth.getToken();
 
         // Behandla betalning och slutför ordern
-        String transactionId = orderService.finalizeOrder(orderId, request.getBetalningsuppgifter());
+        String transactionId = orderService.finalizeOrder(orderId, request.getBetalningsuppgifter(), (io.jsonwebtoken.Jwt) jwt);
 
         // Returnera transaktions-ID och bekräftelsemeddelande
         return ResponseEntity.ok(Map.of(
@@ -95,6 +100,7 @@ public class OrderController {
                 "transaktionsId", transactionId
         ));
     }
+
 
     @Operation(summary = "Update order", description = "Update order with productId and quantity")
     @PutMapping("/update")
